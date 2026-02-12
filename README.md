@@ -11,7 +11,7 @@ Este repositorio funciona como punto central de acceso a todos los componentes d
 ### Portal 
 https://github.com/SantiagoJaraHernandez/reservas-canchas-portal.git
 
-### Frontend (App Web)
+### App
 https://github.com/SantiagoJaraHernandez/reservas-canchas-app.git
 
 ### Backend (API REST)
