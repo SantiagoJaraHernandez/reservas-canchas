@@ -563,7 +563,7 @@ Todos los repositorios siguen este flujo:
 | ADR-002 | Jerarquia de excepciones de dominio | ✅ Aplicado | API |
 | ADR-003 | Contenedorizacion completa con Docker | ✅ Aplicado | Infra |
 
-Los ADRs completos estan documentados en `docs/ADR-reservas-canchas.md` en el repo de la API.
+Los ADRs completos estan documentados en `docs/ADR/ADR-reservas-canchas.md` en este repo.
 
 ---
 
