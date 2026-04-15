@@ -11,11 +11,19 @@ Este repositorio funciona como punto central de acceso a todos los componentes d
 ### Portal 
 https://github.com/SantiagoJaraHernandez/reservas-canchas-portal.git
 
-### App
-https://github.com/SantiagoJaraHernandez/reservas-canchas-app.git
 
 ### Backend (API REST)
-https://github.com/SantiagoJaraHernandez/reservas-canchas-api.git
+https://github.com/SantiagoJaraHernandez/reservas-canchas-api.git (Monolito)
+
+Microservicios
+
+https://github.com/SantiagoJaraHernandez/reservas-canchas-infra.git
+
+https://github.com/SantiagoJaraHernandez/reservas-canchas-gateway.git
+
+https://github.com/SantiagoJaraHernandez/reservas-canchas-ms-reservas.git
+
+https://github.com/SantiagoJaraHernandez/reservas-canchas-ms-auth.git
 
 ### Base de Datos
 https://github.com/SantiagoJaraHernandez/reservas-canchas-db.git
