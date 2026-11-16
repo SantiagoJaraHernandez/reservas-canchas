@@ -1,0 +1,57 @@
+server:
+  port: ${SERVER_PORT:8080}
+  # No revelar detalles internos en errores
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+spring:
+  application:
+    name: gateway
+  codec:
+    # HARDENING: limite de tamano del cuerpo de las peticiones (DoS)
+    max-in-memory-size: 256KB
+  main:
+    banner-mode: off
+
+ms-reservas:
+  base-url: ${MS_RESERVAS_URL:http://ms-reservas:8081}
+
+ms-auth:
+  base-url: ${MS_AUTH_URL:http://ms-auth:8082}
+
+ms-pagos:
+  base-url: ${MS_PAGOS_URL:http://ms-pagos:8083}
+
+# HARDENING: sin valores por defecto. Si faltan, la aplicacion no arranca.
+jwt:
+  secret: ${JWT_SECRET:}
+
+internal:
+  token: ${INTERNAL_TOKEN:}
+
+cors:
+  allowed-origins: ${CORS_ORIGINS:}
+
+security:
+  rate-limit:
+    auth: ${AUTH_RATE_LIMIT:10}
+    api: ${API_RATE_LIMIT:120}
+
+# HARDENING: actuator solo expone /actuator/health y sin detalles
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+  info:
+    env:
+      enabled: false
+
+logging:
+  level:
+    root: INFO

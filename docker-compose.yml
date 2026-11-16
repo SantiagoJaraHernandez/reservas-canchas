@@ -1,0 +1,164 @@
+# =====================================================================
+#  Reservas de Canchas - despliegue endurecido (local y nube)
+#  Uso:  ./deploy/generate-env.sh   (una sola vez, crea .env con secretos)
+#        docker compose up -d --build
+# =====================================================================
+# Redes:
+#   edge     -> caddy, frontend, gateway      (unica red con puertos publicados)
+#   backend  -> gateway, ms-auth, ms-reservas (interna, sin salida a internet)
+#   data     -> microservicios y bases datos  (interna, sin salida a internet)
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+x-java: &java
+  <<: *hardening
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m
+
+services:
+  caddy:
+    <<: *hardening
+    image: caddy:2.8-alpine
+    cap_add:
+      - NET_BIND_SERVICE
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-http://localhost}
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - gateway
+    networks: [edge]
+    mem_limit: 96m
+
+  frontend:
+    <<: *hardening
+    build: ./frontend
+    image: reservas/frontend:hardened
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    networks: [edge]
+    mem_limit: 64m
+
+  gateway:
+    <<: *java
+    build: ./servicios/gateway
+    image: reservas/gateway:hardened
+    environment:
+      MS_AUTH_URL: http://ms-auth:8082
+      MS_RESERVAS_URL: http://ms-reservas:8081
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en .env}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?Falta INTERNAL_TOKEN en .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-10}
+      API_RATE_LIMIT: ${API_RATE_LIMIT:-120}
+    depends_on:
+      ms-auth:
+        condition: service_healthy
+      ms-reservas:
+        condition: service_healthy
+    networks: [edge, backend]
+    mem_limit: 384m
+
+  ms-auth:
+    <<: *java
+    build: ./servicios/ms-auth
+    image: reservas/ms-auth:hardened
+    environment:
+      MONGODB_URI: mongodb://${MONGO_APP_USER:-authapp}:${MONGO_APP_PASSWORD:?Falta MONGO_APP_PASSWORD}@mongodb:27017/authdb?authSource=authdb
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks: [backend, data]
+    mem_limit: 384m
+
+  ms-reservas:
+    <<: *java
+    build: ./servicios/ms-reservas
+    image: reservas/ms-reservas:hardened
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/reservasdb
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-reservas}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [backend, data]
+    mem_limit: 384m
+
+  postgres:
+    <<: *hardening
+    image: postgres:16-alpine
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID]
+    environment:
+      POSTGRES_DB: reservasdb
+      POSTGRES_USER: ${POSTGRES_USER:-reservas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d reservasdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [data]
+    mem_limit: 192m
+
+  mongodb:
+    <<: *hardening
+    image: mongo:7.0
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID]
+    command: ["--auth", "--bind_ip_all", "--wiredTigerCacheSizeGB", "0.25"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Falta MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: authdb
+      MONGO_APP_USER: ${MONGO_APP_USER:-authapp}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+      - ./deploy/mongo-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks: [data]
+    mem_limit: 384m
+
+networks:
+  edge:
+  backend:
+    internal: true
+  data:
+    internal: true
+
+volumes:
+  postgres_data:
+  mongo_data:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,54 @@
+# Proxy de borde: unico componente expuesto a internet.
+#  - HTTPS automatico (Let's Encrypt) cuando SITE_ADDRESS es un dominio.
+#  - /api/*  -> gateway (se elimina el prefijo /api)
+#  - resto   -> frontend estatico
+{
+	admin off
+	servers {
+		timeouts {
+			read_body 10s
+			read_header 10s
+			write 30s
+			idle 60s
+		}
+	}
+}
+
+{$SITE_ADDRESS} {
+	encode gzip
+
+	request_body {
+		max_size 256KB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+		-Via
+	}
+
+	handle_path /api/* {
+		# Bloquear endpoints de administracion de actuator desde internet
+		@actuator path /actuator /actuator/*
+		respond @actuator 404
+
+		reverse_proxy gateway:8080 {
+			header_up X-Real-IP {remote_host}
+			header_down -Server
+		}
+	}
+
+	handle {
+		reverse_proxy frontend:8080 {
+			header_down -Server
+		}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
