@@ -56,4 +56,4 @@ La contraseña del administrador de la aplicación queda en la instancia en `/ro
 ## Costo
 
 La cuenta está en el **Free plan** de AWS (cuenta nueva): el uso se descuenta de los créditos
-gratuitos y AWS no cobra en ese plan. Al terminar la evaluación: EC2 → Terminar instancia.
+gratuitos y AWS no cobra en ese plan.
