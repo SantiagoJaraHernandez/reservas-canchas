@@ -35,7 +35,7 @@ function Navbar() {
 
   const navLinks = [
     { label: 'Reservas', path: '/dashboard' },
-    { label: 'Pagos', path: '/dashboard/pagos' },
+    // Pagos oculto: ms-pagos aun no esta implementado/desplegado
     ...(isAdmin
       ? [
           { label: 'Canchas', path: '/dashboard/canchas' },
@@ -110,17 +110,6 @@ function Navbar() {
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: 18 }}>grid_view</span>
                   Dashboard
-                </button>
-
-                <button
-                  className="dropdown-item"
-                  onClick={() => {
-                    navigate('/dashboard/pagos');
-                    setDropdownOpen(false);
-                  }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>payments</span>
-                  Pagos
                 </button>
 
                 {isAdmin && (
