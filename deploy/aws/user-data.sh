@@ -64,8 +64,10 @@ systemctl enable --now fail2ban
 
 # ---------- 4. Docker endurecido ----------
 if ! command -v docker >/dev/null; then
-  curl -fsSL https://get.docker.com | sh
+  # Paquetes oficiales de Ubuntu (funciona en 24.04 y 26.04); respaldo: script de Docker
+  apt-get install -y docker.io docker-compose-v2 docker-buildx || curl -fsSL https://get.docker.com | sh
 fi
+systemctl enable --now docker
 mkdir -p /etc/docker
 cat > /etc/docker/daemon.json <<'DJ'
 {
