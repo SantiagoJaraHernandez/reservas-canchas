@@ -2,7 +2,7 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "VerConfiguracionDeSeguridad",
+      "Sid": "VerConfiguracion",
       "Effect": "Allow",
       "Action": [
         "ec2:Describe*",
@@ -14,24 +14,21 @@
       "Resource": "*"
     },
     {
-      "Sid": "SesionRemotaSoloEnLaInstanciaDelProyecto",
+      "Sid": "SesionRemotaSoloEstaInstancia",
       "Effect": "Allow",
       "Action": "ssm:StartSession",
-      "Resource": "arn:aws:ec2:*:*:instance/*",
-      "Condition": {
-        "StringEquals": { "ssm:resourceTag/Proyecto": "reservas-canchas" }
-      }
+      "Resource": [
+        "arn:aws:ec2:us-east-1:449406670394:instance/i-000e8e7547c3ca69d",
+        "arn:aws:ssm:us-east-1::document/SSM-SessionManagerRunShell"
+      ]
     },
     {
-      "Sid": "DocumentoDeSesion",
+      "Sid": "SusPropiasSesiones",
       "Effect": "Allow",
-      "Action": "ssm:StartSession",
-      "Resource": "arn:aws:ssm:*:*:document/SSM-SessionManagerRunShell"
-    },
-    {
-      "Sid": "TerminarSusPropiasSesiones",
-      "Effect": "Allow",
-      "Action": ["ssm:TerminateSession", "ssm:ResumeSession"],
+      "Action": [
+        "ssm:TerminateSession",
+        "ssm:ResumeSession"
+      ],
       "Resource": "arn:aws:ssm:*:*:session/${aws:username}-*"
     }
   ]

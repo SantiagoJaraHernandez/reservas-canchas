@@ -59,11 +59,11 @@ Revisión manual del código de `gateway`, `ms-auth`, `ms-reservas`, `portal` e 
 
 ### 2.3 Servidor y nube (AWS EC2)
 
-- Instancia Ubuntu 24.04 en el Free plan, volumen EBS cifrado e IMDSv2 obligatorio.
+- Instancia Ubuntu LTS (t3.small) en el Free plan, volumen EBS cifrado, IMDSv2 obligatorio con límite de saltos 1.
 - Security Group con solo 80 y 443 abiertos. SSH cerrado: la administración se hace por **AWS Systems Manager Session Manager**, con IAM y auditoría en CloudTrail.
 - SSH sin contraseñas ni root, `fail2ban`, `ufw`, parámetros de kernel endurecidos y `unattended-upgrades`.
 - Docker con `no-new-privileges`, `live-restore` y logs rotados.
-- **Acceso del docente:** usuario IAM con permisos de solo lectura y `ssm:StartSession` limitado a la instancia con etiqueta `Proyecto=reservas-canchas` (mínimo privilegio, sin llaves SSH compartidas).
+- **Acceso del docente:** usuario IAM `docente-seguridad` con `SecurityAudit` (solo lectura) y una política propia que permite `ssm:StartSession` únicamente sobre la instancia del proyecto (mínimo privilegio, sin llaves SSH compartidas).
 
 ### 2.4 Proceso (DevSecOps)
 
